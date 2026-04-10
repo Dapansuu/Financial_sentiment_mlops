@@ -57,28 +57,6 @@ class DataIngestion:
         except Exception as e:
             logging.exception("Error during sentiment mapping")
             raise CustomException(e, sys)
-
-    def split_data(self, test_size=0.2, random_state=42):
-        try:
-            logging.info("Starting train-test split")
-
-            X = self.df["sentence"]
-            y = self.df["sentiment"]
-
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=test_size, random_state=random_state
-            )
-
-            logging.info("Train-test split completed")
-            logging.info(f"Train size: {X_train.shape}")
-            logging.info(f"Test size: {X_test.shape}")
-
-            return X_train, X_test, y_train, y_test
-
-        except Exception as e:
-            logging.exception("Error during train-test split")
-            raise CustomException(e, sys)
-
     def data_ingest(self):
         logging.info("Starting full data ingestion pipeline")
 

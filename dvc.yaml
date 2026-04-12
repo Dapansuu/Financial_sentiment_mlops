@@ -37,6 +37,15 @@ stages:
       - dataset/transformed/train
       - dataset/transformed/test
       - dataset/transformed/val
+    params:
+      - model_trainer.vocab_size
+      - model_trainer.sequence_length
+      - model_trainer.embedding_dim
+      - model_trainer.lstm_units
+      - model_trainer.dense_units
+      - model_trainer.learning_rate
+      - model_trainer.batch_size
+      - model_trainer.epochs
     outs:
       - artifacts/model.keras
     metrics:

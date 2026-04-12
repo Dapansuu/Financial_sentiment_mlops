@@ -26,9 +26,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-dataset/*
-!dataset/*.dvc
-!dataset/.gitignore
 
 # PyInstaller
 #   Usually these files are written by a python script from a template

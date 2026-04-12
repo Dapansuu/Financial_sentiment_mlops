@@ -1,0 +1,22 @@
+artifact_path: /home/dapansuu/Coding/Python/OG/Financial_analysis/mlruns/1/models/m-0d0136adaa6942288d8b7e0468848812/artifacts
+flavors:
+  python_function:
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.tensorflow
+    python_version: 3.10.20
+  tensorflow:
+    code: null
+    data: data
+    keras_version: 2.19.1
+    model_type: keras
+    save_format: tf
+mlflow_version: 3.10.1
+model_id: m-0d0136adaa6942288d8b7e0468848812
+model_size_bytes: 2266807
+model_uuid: m-0d0136adaa6942288d8b7e0468848812
+prompts: null
+run_id: 407ddb5e28d3420e83de874858974b4b
+utc_time_created: '2026-04-12 16:17:04.870794'

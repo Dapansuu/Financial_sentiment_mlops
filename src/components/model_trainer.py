@@ -109,6 +109,19 @@ class ModelTrainer:
                 loss="sparse_categorical_crossentropy",
                 metrics=["accuracy"],
             )
+            
+            callbacks = [
+                tf.keras.callbacks.EarlyStopping(
+                    monitor="val_accuracy",
+                    patience=3,
+                    restore_best_weights=True,
+                ),
+                tf.keras.callbacks.ModelCheckpoint(
+                    filepath=self.config.model_path,
+                    save_best_only=True,
+                    monitor="val_accuracy",
+                ),
+            ]
 
             logging.info("Model compiled successfully")
             return model
@@ -120,24 +133,29 @@ class ModelTrainer:
     def _save_confusion_matrix(self, y_true, y_pred):
         try:
             cm = confusion_matrix(y_true, y_pred)
+            labels = ["neutral", "positive", "negative"]
 
             plt.figure(figsize=(8, 6))
-            plt.imshow(cm, interpolation="nearest")
-            plt.title("Confusion Matrix")
-            plt.colorbar()
 
-            tick_marks = np.arange(3)
-            plt.xticks(tick_marks, ["neutral", "positive", "negative"])
-            plt.yticks(tick_marks, ["neutral", "positive", "negative"])
-            plt.xlabel("Predicted Label")
-            plt.ylabel("True Label")
+            im = plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+            plt.title("Confusion Matrix", fontsize=14, pad=20)
+            plt.colorbar(im, fraction=0.046, pad=0.04) 
 
+            tick_marks = np.arange(len(labels))
+            plt.xticks(tick_marks, labels, rotation=45) 
+            plt.yticks(tick_marks, labels)
+            plt.xlabel("Predicted Label", fontweight='bold')
+            plt.ylabel("True Label", fontweight='bold')
+
+            thresh = cm.max() / 2.
             for i in range(cm.shape[0]):
                 for j in range(cm.shape[1]):
-                    plt.text(j, i, str(cm[i, j]), ha="center", va="center")
+                    plt.text(j, i, format(cm[i, j], 'd'),
+                            ha="center", va="center",
+                            color="white" if cm[i, j] > thresh else "black")
 
             plt.tight_layout()
-            plt.savefig(self.config.cm_path)
+            plt.savefig(self.config.cm_path, dpi=300) 
             plt.close()
 
             logging.info("Confusion matrix saved at %s", self.config.cm_path)
@@ -267,7 +285,7 @@ class ModelTrainer:
 
 def main():
     trainer = ModelTrainer()
-    metrics = trainer.initiate_model_trainer()
+    metrics = trainer.model_trainer()
     print(metrics)
 
 

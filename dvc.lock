@@ -16,3 +16,97 @@ stages:
       hash: md5
       md5: 602f9a679d65bc80b4a2d11d47201023
       size: 1284623
+  data_preprocessing:
+    cmd: python -m src.components.data_preprocessing
+    deps:
+    - path: dataset/raw/raw.csv
+      hash: md5
+      md5: 602f9a679d65bc80b4a2d11d47201023
+      size: 1284623
+    - path: src/components/data_preprocessing.py
+      hash: md5
+      md5: 68cc9675d63e5c40f79382040a65839a
+      size: 6521
+    outs:
+    - path: dataset/interim/test.csv
+      hash: md5
+      md5: 5face44c846883068431466ac721dce3
+      size: 88537
+    - path: dataset/interim/train.csv
+      hash: md5
+      md5: 943a50a88f2106fce10a2489dfb2284c
+      size: 703765
+    - path: dataset/interim/val.csv
+      hash: md5
+      md5: 63fad529877cc058cf55d29cd0324b36
+      size: 90267
+  data_transformation:
+    cmd: python -m src.components.data_transformation
+    deps:
+    - path: dataset/interim/test.csv
+      hash: md5
+      md5: 5face44c846883068431466ac721dce3
+      size: 88537
+    - path: dataset/interim/train.csv
+      hash: md5
+      md5: 943a50a88f2106fce10a2489dfb2284c
+      size: 703765
+    - path: dataset/interim/val.csv
+      hash: md5
+      md5: 63fad529877cc058cf55d29cd0324b36
+      size: 90267
+    - path: src/components/data_transformation.py
+      hash: md5
+      md5: 2f6a8be790a814e73bee198a00b93b4c
+      size: 5524
+    outs:
+    - path: dataset/transformed/test
+      hash: md5
+      md5: a862be0c929a9b69e41df257511ec5c6.dir
+      size: 432486
+      nfiles: 3
+    - path: dataset/transformed/train
+      hash: md5
+      md5: 0f87a1b3713c082c45b57e2bf137c5eb.dir
+      size: 3459419
+      nfiles: 3
+    - path: dataset/transformed/val
+      hash: md5
+      md5: 398afe277eba8ab4a60f390715e51c3e.dir
+      size: 432487
+      nfiles: 3
+    - path: dataset/transformed/vectorizer.keras
+      hash: md5
+      md5: f0330df4491696c94a18384b2866f166
+      size: 192348
+  model_trainer:
+    cmd: python -m src.components.model_trainer
+    deps:
+    - path: dataset/transformed/test
+      hash: md5
+      md5: a862be0c929a9b69e41df257511ec5c6.dir
+      size: 432486
+      nfiles: 3
+    - path: dataset/transformed/train
+      hash: md5
+      md5: 0f87a1b3713c082c45b57e2bf137c5eb.dir
+      size: 3459419
+      nfiles: 3
+    - path: dataset/transformed/val
+      hash: md5
+      md5: 398afe277eba8ab4a60f390715e51c3e.dir
+      size: 432487
+      nfiles: 3
+    - path: src/components/model_trainer.py
+      hash: md5
+      md5: e0721eb91d72466aa59057dd2a31b762
+      size: 10654
+    outs:
+    - path: artifacts/metrics.json
+      hash: md5
+      md5: ae7275a3ebfcff3a2efcc8e30da5def5
+      size: 230
+    - path: artifacts/model.keras
+      hash: md5
+      md5: 29c91c448eb74d6e6a79d7160eccbdf6
+      size: 2266789

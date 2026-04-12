@@ -1,0 +1,43 @@
+stages:
+  data_ingestion:
+    cmd: python -m src.components.data_ingestion
+    deps:
+      - src/components/data_ingestion.py
+      - dataset/data.csv
+    outs:
+      - dataset/raw/raw.csv
+
+  data_preprocessing:
+    cmd: python -m src.components.data_preprocessing
+    deps:
+      - src/components/data_preprocessing.py
+      - dataset/raw/raw.csv
+    outs:
+      - dataset/interim/train.csv
+      - dataset/interim/test.csv
+      - dataset/interim/val.csv
+
+  data_transformation:
+    cmd: python -m src.components.data_transformation
+    deps:
+      - src/components/data_transformation.py
+      - dataset/interim/train.csv
+      - dataset/interim/test.csv
+      - dataset/interim/val.csv
+    outs:
+      - dataset/transformed/train
+      - dataset/transformed/test
+      - dataset/transformed/val
+      - dataset/transformed/vectorizer.keras
+
+  model_trainer:
+    cmd: python -m src.components.model_trainer
+    deps:
+      - src/components/model_trainer.py
+      - dataset/transformed/train
+      - dataset/transformed/test
+      - dataset/transformed/val
+    outs:
+      - artifacts/model.keras
+    metrics:
+      - artifacts/metrics.json

@@ -77,3 +77,11 @@ class DataIngestion:
         except Exception as e:
             logging.exception("Data ingestion stage failed")
             raise CustomException(e, sys)
+        
+if __name__ == "__main__":
+    try:
+        data_ingestion = DataIngestion()
+        data_ingestion.data_ingestion()
+    except Exception as e:
+        logging.exception("Error in main execution")
+        raise CustomException(e, sys)

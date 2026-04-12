@@ -1,5 +1,9 @@
-data_ingestion:
-  source_data_path: dataset/data.csv
-  test_size: 0.2
-  val_size: 0.1
-  random_state: 42
+model_trainer:
+  vocab_size: 12000
+  sequence_length: 40
+  embedding_dim: 16
+  lstm_units: 24
+  dense_units: 16
+  learning_rate: 0.001
+  batch_size: 32
+  epochs: 5

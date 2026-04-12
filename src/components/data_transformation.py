@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from src.utils.exception import CustomException
 from src.utils.logger import logging
-
+import shutil
 
 @dataclass
 class DataTransformationConfig:
@@ -87,8 +87,6 @@ class DataTransformation:
 
     def transform_data(self):
         try:
-            import shutil
-
             train_df, test_df, val_df = self.load_data()
 
             X_train, y_train, X_test, y_test, X_val, y_val = self.split_features_labels(
@@ -148,3 +146,11 @@ class DataTransformation:
         except Exception as e:
             logging.exception("Data transformation stage failed")
             raise CustomException(e, sys)
+
+if __name__ == "__main__":
+    try:
+        transformation = DataTransformation()
+        transformation.transform_data()
+    except Exception as e:
+        logging.exception("Error in main execution")
+        raise CustomException(e, sys)

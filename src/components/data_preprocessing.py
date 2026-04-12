@@ -170,3 +170,11 @@ class DataPreprocessing:
         except Exception as e:
             logging.exception("Data preprocessing stage failed")
             raise CustomException(e, sys)
+
+if __name__ == "__main__":
+    try:
+        data_preprocessing = DataPreprocessing()
+        data_preprocessing.data_preprocessing()
+    except Exception as e:
+        logging.exception("Error in main execution")
+        raise CustomException(e, sys)

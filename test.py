@@ -40,6 +40,5 @@ def main():
     print(transformed_val)
     print(vectorizer_path)
 
-
 if __name__ == "__main__":
     main()

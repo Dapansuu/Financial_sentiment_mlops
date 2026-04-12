@@ -1,0 +1,5 @@
+data_ingestion:
+  source_data_path: dataset/data.csv
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42

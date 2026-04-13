@@ -115,7 +115,7 @@ class DataTransformation:
                 if os.path.exists(path):
                     shutil.rmtree(path)
 
-            vectorizer_path = "dataset/transformed/vectorizer.keras"
+            vectorizer_path = "artifacts/vectorizer.keras"
             if os.path.exists(vectorizer_path):
                 os.remove(vectorizer_path)
 

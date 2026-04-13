@@ -1,9 +1,9 @@
 model_trainer:
-  vocab_size: 11000
+  vocab_size: 10000
   sequence_length: 40
   embedding_dim: 16
   lstm_units: 24
   dense_units: 16
-  learning_rate: 0.001
+  learning_rate: 0.0001
   batch_size: 32
-  epochs: 10
+  epochs: 20

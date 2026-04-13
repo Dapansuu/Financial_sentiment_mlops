@@ -99,14 +99,24 @@ stages:
       nfiles: 3
     - path: src/components/model_trainer.py
       hash: md5
-      md5: e0721eb91d72466aa59057dd2a31b762
-      size: 10654
+      md5: c410cfce67f9f97afc4723a5a86b1f78
+      size: 10947
+    params:
+      params.yaml:
+        model_trainer.batch_size: 32
+        model_trainer.dense_units: 16
+        model_trainer.embedding_dim: 16
+        model_trainer.epochs: 20
+        model_trainer.learning_rate: 0.0001
+        model_trainer.lstm_units: 24
+        model_trainer.sequence_length: 25
+        model_trainer.vocab_size: 10000
     outs:
     - path: artifacts/metrics.json
       hash: md5
-      md5: ae7275a3ebfcff3a2efcc8e30da5def5
+      md5: 1ea679743c5024cbf0ce435c96fd235a
       size: 230
     - path: artifacts/model.keras
       hash: md5
-      md5: 29c91c448eb74d6e6a79d7160eccbdf6
-      size: 2266789
+      md5: 3e51ae463e872f22ea74af0698b05745
+      size: 2074789

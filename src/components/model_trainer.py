@@ -17,10 +17,21 @@ from sklearn.metrics import (
     classification_report,
 )
 
+from mlflow.models import infer_signature
+
 from src.utils.exception import CustomException
 from src.utils.logger import logging
 
 import yaml
+
+
+def load_params():
+    with open("params.yaml", "r") as f:
+        return yaml.safe_load(f)
+
+
+PARAMS = load_params()
+
 
 @dataclass
 class ModelTrainerConfig:
@@ -28,22 +39,23 @@ class ModelTrainerConfig:
     train_data_path: str = os.path.join("dataset", "transformed", "train")
     test_data_path: str = os.path.join("dataset", "transformed", "test")
     val_data_path: str = os.path.join("dataset", "transformed", "val")
+    vectorizer_path: str = os.path.join("dataset", "transformed", "vectorizer.keras")
 
     artifact_dir: str = "artifacts"
     model_path: str = os.path.join("artifacts", "model.keras")
+    inference_model_path: str = os.path.join("artifacts", "inference_model.keras")
     metrics_path: str = os.path.join("artifacts", "metrics.json")
     cm_path: str = os.path.join("artifacts", "confusion_matrix.png")
     report_path: str = os.path.join("artifacts", "classification_report.txt")
 
-    params = yaml.safe_load(open("params.yaml"))
-    vocab_size: int = params["model_trainer"]["vocab_size"]
-    sequence_length: int = params["model_trainer"]["sequence_length"]
-    embedding_dim: int = params["model_trainer"]["embedding_dim"]
-    lstm_units: int = params["model_trainer"]["lstm_units"]
-    dense_units: int = params["model_trainer"]["dense_units"]
-    learning_rate: float = params["model_trainer"]["learning_rate"]
-    batch_size: int = params["model_trainer"]["batch_size"]
-    epochs: int = params["model_trainer"]["epochs"]
+    vocab_size: int = PARAMS["model_trainer"]["vocab_size"]
+    sequence_length: int = PARAMS["model_trainer"]["sequence_length"]
+    embedding_dim: int = PARAMS["model_trainer"]["embedding_dim"]
+    lstm_units: int = PARAMS["model_trainer"]["lstm_units"]
+    dense_units: int = PARAMS["model_trainer"]["dense_units"]
+    learning_rate: float = PARAMS["model_trainer"]["learning_rate"]
+    batch_size: int = PARAMS["model_trainer"]["batch_size"]
+    epochs: int = PARAMS["model_trainer"]["epochs"]
 
 
 class ModelTrainer:
@@ -80,6 +92,23 @@ class ModelTrainer:
             logging.exception("Failed while loading transformed datasets")
             raise CustomException(e, sys)
 
+    def load_vectorizer(self):
+        try:
+            if not os.path.exists(self.config.vectorizer_path):
+                raise FileNotFoundError(
+                    f"Saved vectorizer not found at: {self.config.vectorizer_path}"
+                )
+
+            vectorizer_model = tf.keras.models.load_model(self.config.vectorizer_path)
+            text_vectorizer = vectorizer_model.layers[0]
+
+            logging.info("Saved vectorizer loaded successfully")
+            return text_vectorizer
+
+        except Exception as e:
+            logging.exception("Failed while loading saved vectorizer")
+            raise CustomException(e, sys)
+
     def build_model(self):
         try:
             logging.info("Building BiLSTM model for vectorized inputs")
@@ -109,7 +138,16 @@ class ModelTrainer:
                 loss="sparse_categorical_crossentropy",
                 metrics=["accuracy"],
             )
-            
+
+            logging.info("Model compiled successfully")
+            return model
+
+        except Exception as e:
+            logging.exception("Error while building model")
+            raise CustomException(e, sys)
+
+    def get_callbacks(self):
+        try:
             callbacks = [
                 tf.keras.callbacks.EarlyStopping(
                     monitor="val_accuracy",
@@ -122,12 +160,24 @@ class ModelTrainer:
                     monitor="val_accuracy",
                 ),
             ]
-
-            logging.info("Model compiled successfully")
-            return model
+            return callbacks
 
         except Exception as e:
-            logging.exception("Error while building model")
+            logging.exception("Error while creating callbacks")
+            raise CustomException(e, sys)
+
+    def build_inference_model(self, trained_model, text_vectorizer):
+        try:
+            text_input = tf.keras.Input(shape=(1,), dtype=tf.string, name="text")
+            x = text_vectorizer(text_input)
+            outputs = trained_model(x)
+
+            inference_model = tf.keras.Model(inputs=text_input, outputs=outputs)
+            logging.info("Inference model created successfully")
+            return inference_model
+
+        except Exception as e:
+            logging.exception("Error while building inference model")
             raise CustomException(e, sys)
 
     def _save_confusion_matrix(self, y_true, y_pred):
@@ -136,26 +186,28 @@ class ModelTrainer:
             labels = ["neutral", "positive", "negative"]
 
             plt.figure(figsize=(8, 6))
-
             im = plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
             plt.title("Confusion Matrix", fontsize=14, pad=20)
-            plt.colorbar(im, fraction=0.046, pad=0.04) 
+            plt.colorbar(im, fraction=0.046, pad=0.04)
 
             tick_marks = np.arange(len(labels))
-            plt.xticks(tick_marks, labels, rotation=45) 
+            plt.xticks(tick_marks, labels, rotation=45)
             plt.yticks(tick_marks, labels)
-            plt.xlabel("Predicted Label", fontweight='bold')
-            plt.ylabel("True Label", fontweight='bold')
+            plt.xlabel("Predicted Label", fontweight="bold")
+            plt.ylabel("True Label", fontweight="bold")
 
-            thresh = cm.max() / 2.
+            thresh = cm.max() / 2.0
             for i in range(cm.shape[0]):
                 for j in range(cm.shape[1]):
-                    plt.text(j, i, format(cm[i, j], 'd'),
-                            ha="center", va="center",
-                            color="white" if cm[i, j] > thresh else "black")
+                    plt.text(
+                        j, i, format(cm[i, j], "d"),
+                        ha="center",
+                        va="center",
+                        color="white" if cm[i, j] > thresh else "black",
+                    )
 
             plt.tight_layout()
-            plt.savefig(self.config.cm_path, dpi=300) 
+            plt.savefig(self.config.cm_path, dpi=300)
             plt.close()
 
             logging.info("Confusion matrix saved at %s", self.config.cm_path)
@@ -188,12 +240,7 @@ class ModelTrainer:
 
             train_ds, test_ds, val_ds = self.load_transformed_data()
             model = self.build_model()
-
-            early_stopping = tf.keras.callbacks.EarlyStopping(
-                monitor="val_accuracy",
-                patience=3,
-                restore_best_weights=True,
-            )
+            callbacks = self.get_callbacks()
 
             mlflow.set_experiment("financial_sentiment_bilstm")
 
@@ -217,7 +264,7 @@ class ModelTrainer:
                     train_ds,
                     validation_data=val_ds,
                     epochs=self.config.epochs,
-                    callbacks=[early_stopping],
+                    callbacks=callbacks,
                     verbose=1,
                 )
 
@@ -256,8 +303,15 @@ class ModelTrainer:
                 for i, val_acc in enumerate(history.history.get("val_accuracy", [])):
                     mlflow.log_metric("val_accuracy_epoch", float(val_acc), step=i)
 
+                # Save numeric-input training model
                 model.save(self.config.model_path)
-                logging.info("Model saved to %s", self.config.model_path)
+                logging.info("Training model saved to %s", self.config.model_path)
+
+                # Build and save raw-text inference model
+                text_vectorizer = self.load_vectorizer()
+                inference_model = self.build_inference_model(model, text_vectorizer)
+                inference_model.save(self.config.inference_model_path)
+                logging.info("Inference model saved to %s", self.config.inference_model_path)
 
                 self._save_confusion_matrix(y_true, y_pred)
                 mlflow.log_artifact(self.config.metrics_path, artifact_path="metrics")
@@ -269,9 +323,15 @@ class ModelTrainer:
 
                 mlflow.log_artifact(self.config.report_path, artifact_path="reports")
 
+                sample_input = np.random.randint(1, self.config.vocab_size, size=(2, self.config.sequence_length))
+                sample_output = model.predict(sample_input, verbose=0)
+                signature = infer_signature(sample_input, sample_output)
+
                 mlflow.tensorflow.log_model(
                     model=model,
-                    artifact_path="model",
+                    name="model",
+                    signature=signature,
+                    input_example=sample_input,
                 )
 
                 logging.info("MLflow logging completed successfully")
